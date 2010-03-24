@@ -1,1 +1,3 @@
-HSM in C.
+HSM in C++.
+
+Your HSM class needs to use the template.
