@@ -22,7 +22,7 @@ class TestHSM : public CHsm<TestHSM, TestEvent> {
 
 public:
 	CHsmState topState(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "topState parent\n";
 			return ch_handled();
@@ -38,7 +38,7 @@ public:
 	};
 
 	CHsmState commonState(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "commonState parent\n";
 			return ch_parent(&TestHSM::topState);
@@ -60,7 +60,7 @@ public:
 	};
 
 	CHsmState leftBranch1(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "leftBranch1 parent\n";
 			return ch_parent(&TestHSM::commonState);
@@ -80,7 +80,7 @@ public:
 	};
 
 	CHsmState leftBranch2(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "leftBranch2 parent\n";
 			return ch_parent(&TestHSM::leftBranch1);
@@ -100,7 +100,7 @@ public:
 	};
 
 	CHsmState rightBranch1(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch1 entry\n";
 			return ch_handled();
@@ -116,7 +116,7 @@ public:
 	};
 
 	CHsmState rightBranch2(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch2 entry\n";
 			return ch_handled();
@@ -132,7 +132,7 @@ public:
 	};
 
 	CHsmState rightBranch3(TestEvent e) {
-		switch (e.number()) {
+		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch3 entry\n";
 			return ch_handled();
