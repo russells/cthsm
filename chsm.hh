@@ -134,7 +134,10 @@ protected:
 	 * \arg initial the initial state for a derived HSM.  A transition from
 	 * the top state is done in the constructor.
 	 */
-	CHsm<C,E>(State top, State initial) {
+	CHsm<C,E>(State top, State initial)
+		: _events(),
+		  _event_lock(false)
+	{
 		_topState = top;
 		_state = initial;
 		transition(initial);
@@ -144,7 +147,10 @@ protected:
 	 * \arg initial the initial state for a derived HSM.  A transition from
 	 * the top state is done in the constructor.
 	 */
-	CHsm<C,E>(State initial) {
+	CHsm<C,E>(State initial)
+		: _events(),
+		  _event_lock(false)
+	{
 		_topState = &C::topState;
 		_state = initial;
 		transition(initial);
@@ -168,26 +174,9 @@ public:
 	 * external.
 	 */
 	void sendEvent(E e) {
-		// Save a copy of the current state so the loop below does not
-		// change the current state.  If necessary, the current state
-		// will be changed by transition().
-		State state = _state;
-		CHsmState s;
-		do {
-			s = (static_cast<C*>(this)->*state)(e);
-			switch (s) {
-			case CH_HANDLED:
-				break;
-			case CH_PARENT:
-				state = _parentState;
-				break;
-			case CH_TRANSITION:
-				transition(_state, _transitionState);
-				// Force a break from the while loop.
-				s = CH_HANDLED;
-				break;
-			}
-		} while (s != CH_HANDLED);
+		_events.push_back(e);
+		if (! _event_lock)
+			sendEvents();
 	};
 
 private:
@@ -214,6 +203,53 @@ private:
 	 * an event.
 	 */
 	State _parentState;
+
+	/**
+	 * List of events that we are to handle.
+	 */
+	std::deque<E> _events;
+
+	/**
+	 * Lock to make sure that while we are busy handling an event, any
+	 * events sent to us will be queued.
+	 */
+	bool _event_lock;
+
+	/**
+	 * While there are events in our queue, handle them.
+	 */
+	void sendEvents() {
+		while (_events.size()) {
+			E e = _events.front();
+			_events.pop_front();
+			_event_lock = true;
+			send1Event(e);
+			_event_lock = false;
+		}
+	};
+
+	void send1Event(E e) {
+		// Save a copy of the current state so the loop below does not
+		// change the current state.  If necessary, the current state
+		// will be changed by transition().
+		State state = _state;
+		CHsmState s;
+		do {
+			s = (static_cast<C*>(this)->*state)(e);
+			switch (s) {
+			case CH_HANDLED:
+				break;
+			case CH_PARENT:
+				state = _parentState;
+				break;
+			case CH_TRANSITION:
+				transition(_state, _transitionState);
+				// Force a break from the while loop.
+				s = CH_HANDLED;
+				break;
+			}
+		} while (s != CH_HANDLED);
+	};
 
 	/**
 	 * The maximum depth of any part of the state hierarchy.  A hierarchy
