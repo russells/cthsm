@@ -136,24 +136,32 @@ protected:
 	 */
 	CHsm<C,E>(State top, State initial)
 		: _events(),
-		  _event_lock(false)
+		  _event_lock(false),
+		  _chsmStartHasBeenCalled(false)
 	{
 		_topState = top;
 		_state = initial;
-		transition(initial);
 	};
 
 	/**
-	 * \arg initial the initial state for a derived HSM.  A transition from
-	 * the top state is done in the constructor.
+	 * \arg initial the initial state for a derived HSM.
 	 */
 	CHsm<C,E>(State initial)
 		: _events(),
-		  _event_lock(false)
+		  _event_lock(false),
+		  _chsmStartHasBeenCalled(false)
 	{
 		_topState = &C::topState;
 		_state = initial;
-		transition(initial);
+	};
+
+	/**
+	 * Do the transition to the initial state.  Derived state machines
+	 * should call this at the end of their constructors.
+	 */
+	void chsmStart() {
+		_chsmStartHasBeenCalled = true;
+		transition(_state);
 	};
 
 	/**
@@ -174,6 +182,8 @@ public:
 	 * external.
 	 */
 	void sendEvent(E e) {
+		assert( _chsmStartHasBeenCalled );
+
 		_events.push_back(e);
 		if (! _event_lock)
 			sendEvents();
@@ -188,7 +198,8 @@ private:
 	State _topState;
 
 	/**
-	 * The current HSM state.
+	 * The current HSM state.  Also set in the constructor so we can do the
+	 * initial transition in chsmStart().
 	 */
 	State _state;
 
@@ -259,6 +270,11 @@ private:
 	static const unsigned MAX_DEPTH = 10;
 
 	/**
+	 * Set when chsmStart() has been called.
+	 */
+	bool _chsmStartHasBeenCalled;
+
+	/**
 	 * Transition from one state to another.
 	 *
 	 * We find out the path from the source state to the destination state,
@@ -284,6 +300,8 @@ private:
 	 */
 	void transition(State src, State dst)
 	{
+		assert( _chsmStartHasBeenCalled );
+
 		// It would be silly to transition to the top state, whose only
 		// function is to discard events.  The only exception to this
 		// is in the destructor, when we want to exit completely, but
@@ -426,6 +444,8 @@ private:
 	/** The simple transition from the top state to a destination. */
 	void transition(State dst)
 	{
+		assert( _chsmStartHasBeenCalled );
+
 		// Don't transition to the top state.
 		assert( dst != _topState );
 

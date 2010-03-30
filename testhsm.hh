@@ -150,7 +150,7 @@ public:
 	};
 
 	TestHSM() : CHsm<TestHSM,TestEvent>(&TestHSM::topState, &TestHSM::leftBranch2) {
-		//
+		chsmStart();
 	};
 
 };
