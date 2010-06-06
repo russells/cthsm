@@ -1,3 +1,4 @@
-HSM in C++.
+HSM in a C++ template.
 
-Your HSM class needs to use the template.
+Your HSM class needs to use the template.  The template header is fairly
+well commented, and testhsm.cc is an example class.

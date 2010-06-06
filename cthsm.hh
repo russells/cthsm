@@ -1,12 +1,12 @@
-#ifndef __chsm_hh__
-#define __chsm_hh__
+#ifndef __cthsm_hh__
+#define __cthsm_hh__
 
 #include <deque>
 #include <cassert>
 
 #include <iostream>
 
-namespace CHSM {
+namespace CTHSM {
 
 
 class Event {
@@ -34,7 +34,7 @@ public:
 	/**
 	 * Constructors of derived event types need to call this constructor
 	 * with their derived event number.  Derived types also need a
-	 * constructor that takes a single int, because other parts of CHsm
+	 * constructor that takes a single int, because other parts of CTHsm
 	 * make events assuming that constructor.
 	 */
 	Event(int event) {
@@ -52,11 +52,11 @@ private:
 };
 
 template<typename C, typename E>
-class CHsm {
+class CTHsm {
 
 protected:
 
-	enum CHsmState {
+	enum CTHsmState {
 		/**
 		 * Return to indicate that the State has handled the event.
 		 * Returned automatically by ch_handled().
@@ -78,7 +78,7 @@ protected:
 	/**
 	 * The type of all state functions.
 	 */
-	typedef CHsmState (C::*State)(E);
+	typedef CTHsmState (C::*State)(E);
 
 	/**
 	 * A list of States.  This is a deque so we can iterate over it both
@@ -94,7 +94,7 @@ protected:
 	/**
 	 * Called by a state function when it has handled an event.
 	 */
-	CHsmState ch_handled() {
+	CTHsmState ch_handled() {
 		return CH_HANDLED;
 	};
 
@@ -104,7 +104,7 @@ protected:
 	 * transition() functions while discovering the path from one state to
 	 * another.
 	 */
-	CHsmState ch_parent(State state) {
+	CTHsmState ch_parent(State state) {
 		_parentState = state;
 		return CH_PARENT;
 	};
@@ -115,7 +115,7 @@ protected:
 	 * current state, in the case that an event is not handled and we start
 	 * traversing up to find a state function that does handle it.
 	 */
-	CHsmState ch_transition(State state) {
+	CTHsmState ch_transition(State state) {
 		_transitionState = state;
 		return CH_TRANSITION;
 	};
@@ -123,7 +123,7 @@ protected:
 	/**
 	 * A default top state that can be used by derived HSMs.
 	 */
-	CHsmState topState(E e) {
+	CTHsmState topState(E e) {
 		return ch_handled();
 	};
 
@@ -134,7 +134,7 @@ protected:
 	 * \arg initial the initial state for a derived HSM.  A transition from
 	 * the top state is done in the constructor.
 	 */
-	CHsm<C,E>(State top, State initial)
+	CTHsm<C,E>(State top, State initial)
 		: _events(),
 		  _event_lock(false),
 		  _chsmStartHasBeenCalled(false)
@@ -146,7 +146,7 @@ protected:
 	/**
 	 * \arg initial the initial state for a derived HSM.
 	 */
-	CHsm<C,E>(State initial)
+	CTHsm<C,E>(State initial)
 		: _events(),
 		  _event_lock(false),
 		  _chsmStartHasBeenCalled(false)
@@ -168,7 +168,7 @@ protected:
 	 * Does a transition from the current state to the top state so the HSM
 	 * can undo all its actions on exit.
 	 */
-	virtual ~CHsm<C,E>() {
+	virtual ~CTHsm<C,E>() {
 		exitTransition();
 	};
 
@@ -244,7 +244,7 @@ private:
 		// change the current state.  If necessary, the current state
 		// will be changed by transition().
 		State state = _state;
-		CHsmState s;
+		CTHsmState s;
 		do {
 			s = (static_cast<C*>(this)->*state)(e);
 			switch (s) {
@@ -289,7 +289,7 @@ private:
 	 * self transition, so we call the exit then the entry action for that
 	 * state.
 	 *
-	 * TODO: When a significant application using CHsm exists, profile to
+	 * TODO: When a significant application using CTHsm exists, profile to
 	 * see how much time is spent in here, and work out how to minimise it.
 	 * One possible optimisation would be to keep a map of pair<src,dst> to
 	 * pair<srcparents,destparents>, and if we have an entry in there then
@@ -482,5 +482,5 @@ private:
 };
 
 
-} // namespace CHSM
-#endif /* __chsm_hh__*/
+} // namespace CTHSM
+#endif /* __cthsm_hh__*/

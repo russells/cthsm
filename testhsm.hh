@@ -1,10 +1,10 @@
 #ifndef __testhsm_hh__
 #define __testhsm_hh__
 
-#include "chsm.hh"
+#include "cthsm.hh"
 #include <iostream>
 
-using namespace CHSM;
+using namespace CTHSM;
 
 class TestEvent : public Event {
 public:
@@ -18,10 +18,10 @@ public:
 	};
 };
 
-class TestHSM : public CHsm<TestHSM, TestEvent> {
+class TestHSM : public CTHsm<TestHSM, TestEvent> {
 
 public:
-	CHsmState topState(TestEvent e) {
+	CTHsmState topState(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "topState parent\n";
@@ -37,7 +37,7 @@ public:
 		}
 	};
 
-	CHsmState commonState(TestEvent e) {
+	CTHsmState commonState(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "commonState parent\n";
@@ -59,7 +59,7 @@ public:
 		}
 	};
 
-	CHsmState leftBranch1(TestEvent e) {
+	CTHsmState leftBranch1(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "leftBranch1 parent\n";
@@ -79,7 +79,7 @@ public:
 		}
 	};
 
-	CHsmState leftBranch2(TestEvent e) {
+	CTHsmState leftBranch2(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_PARENT:
 			std::cout << "leftBranch2 parent\n";
@@ -99,7 +99,7 @@ public:
 		}
 	};
 
-	CHsmState rightBranch1(TestEvent e) {
+	CTHsmState rightBranch1(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch1 entry\n";
@@ -115,7 +115,7 @@ public:
 		}
 	};
 
-	CHsmState rightBranch2(TestEvent e) {
+	CTHsmState rightBranch2(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch2 entry\n";
@@ -131,7 +131,7 @@ public:
 		}
 	};
 
-	CHsmState rightBranch3(TestEvent e) {
+	CTHsmState rightBranch3(TestEvent e) {
 		switch (e.event()) {
 		case TestEvent::CHE_ENTRY:
 			std::cout << "rightBranch3 entry\n";
@@ -149,7 +149,7 @@ public:
 		}
 	};
 
-	TestHSM() : CHsm<TestHSM,TestEvent>(&TestHSM::topState, &TestHSM::leftBranch2) {
+	TestHSM() : CTHsm<TestHSM,TestEvent>(&TestHSM::topState, &TestHSM::leftBranch2) {
 		chsmStart();
 	};
 
