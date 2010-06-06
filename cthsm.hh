@@ -137,7 +137,7 @@ protected:
 	CTHsm<C,E>(State top, State initial)
 		: _events(),
 		  _event_lock(false),
-		  _chsmStartHasBeenCalled(false)
+		  _cthsmStartHasBeenCalled(false)
 	{
 		_topState = top;
 		_state = initial;
@@ -149,7 +149,7 @@ protected:
 	CTHsm<C,E>(State initial)
 		: _events(),
 		  _event_lock(false),
-		  _chsmStartHasBeenCalled(false)
+		  _cthsmStartHasBeenCalled(false)
 	{
 		_topState = &C::topState;
 		_state = initial;
@@ -159,8 +159,8 @@ protected:
 	 * Do the transition to the initial state.  Derived state machines
 	 * should call this at the end of their constructors.
 	 */
-	void chsmStart() {
-		_chsmStartHasBeenCalled = true;
+	void cthsmStart() {
+		_cthsmStartHasBeenCalled = true;
 		transition(_state);
 	};
 
@@ -182,7 +182,7 @@ public:
 	 * external.
 	 */
 	void sendEvent(E e) {
-		assert( _chsmStartHasBeenCalled );
+		assert( _cthsmStartHasBeenCalled );
 
 		_events.push_back(e);
 		if (! _event_lock)
@@ -199,7 +199,7 @@ private:
 
 	/**
 	 * The current HSM state.  Also set in the constructor so we can do the
-	 * initial transition in chsmStart().
+	 * initial transition in cthsmStart().
 	 */
 	State _state;
 
@@ -270,9 +270,9 @@ private:
 	static const unsigned MAX_DEPTH = 10;
 
 	/**
-	 * Set when chsmStart() has been called.
+	 * Set when cthsmStart() has been called.
 	 */
-	bool _chsmStartHasBeenCalled;
+	bool _cthsmStartHasBeenCalled;
 
 	/**
 	 * Transition from one state to another.
@@ -300,7 +300,7 @@ private:
 	 */
 	void transition(State src, State dst)
 	{
-		assert( _chsmStartHasBeenCalled );
+		assert( _cthsmStartHasBeenCalled );
 
 		// It would be silly to transition to the top state, whose only
 		// function is to discard events.  The only exception to this
@@ -444,7 +444,7 @@ private:
 	/** The simple transition from the top state to a destination. */
 	void transition(State dst)
 	{
-		assert( _chsmStartHasBeenCalled );
+		assert( _cthsmStartHasBeenCalled );
 
 		// Don't transition to the top state.
 		assert( dst != _topState );
