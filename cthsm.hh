@@ -24,21 +24,21 @@ public:
 		/**
 		 * Sent by the hsm to find out a State's parent.
 		 */
-		CHE_PARENT,
+		CTHE_PARENT,
 		/**
 		 * Do a State's entry action.
 		 */
-		CHE_ENTRY,
+		CTHE_ENTRY,
 		/**
 		 * Do a State's exit action.
 		 */
-		CHE_EXIT,
+		CTHE_EXIT,
 		/**
 		 * The first numbered event that can be used by a derived HSM.
 		 * The event numbers derived by the user HSM should start at
 		 * this number.
 		 */
-		CHE_USER,
+		CTHE_USER,
 	};
 	/**
 	 * Constructors of derived event types need to call this constructor
@@ -68,20 +68,20 @@ protected:
 	enum CTHsmState {
 		/**
 		 * Return to indicate that the State has handled the event.
-		 * Returned automatically by ch_handled().
+		 * Returned automatically by cth_handled().
 		 */
-		CH_HANDLED = 1,
+		CTH_HANDLED = 1,
 		/**
 		 * Return to indicate that the State has not handled the event,
 		 * and that it has indicated the parent state that might handle
-		 * the event.  Returned automatically by ch_parent(State).
+		 * the event.  Returned automatically by cth_parent(State).
 		 */
-		CH_PARENT,
+		CTH_PARENT,
 		/**
 		 * Return to indicate that we want to transition to another
-		 * state.  Returned automatically by ch_transition(State).
+		 * state.  Returned automatically by cth_transition(State).
 		 */
-		CH_TRANSITION,
+		CTH_TRANSITION,
 	};
 
 	/**
@@ -103,8 +103,8 @@ protected:
 	/**
 	 * Called by a state function when it has handled an event.
 	 */
-	CTHsmState ch_handled() {
-		return CH_HANDLED;
+	CTHsmState cth_handled() {
+		return CTH_HANDLED;
 	};
 
 	/**
@@ -113,9 +113,9 @@ protected:
 	 * transition() functions while discovering the path from one state to
 	 * another.
 	 */
-	CTHsmState ch_parent(State state) {
+	CTHsmState cth_parent(State state) {
 		_parentState = state;
-		return CH_PARENT;
+		return CTH_PARENT;
 	};
 
 	/**
@@ -124,21 +124,21 @@ protected:
 	 * current state, in the case that an event is not handled and we start
 	 * traversing up to find a state function that does handle it.
 	 */
-	CTHsmState ch_transition(State state) {
+	CTHsmState cth_transition(State state) {
 		_transitionState = state;
-		return CH_TRANSITION;
+		return CTH_TRANSITION;
 	};
 
 	/**
 	 * A default top state that can be used by derived HSMs.
 	 */
 	CTHsmState topState(E e) {
-		return ch_handled();
+		return cth_handled();
 	};
 
 	/**
 	 * \arg top the top state for a derived HSM.  This state should return
-	 * ch_handled() and do nothing else.
+	 * cth_handled() and do nothing else.
 	 *
 	 * \arg initial the initial state for a derived HSM.  A transition from
 	 * the top state is done in the constructor.
@@ -201,7 +201,7 @@ public:
 private:
 	/**
 	 * Set once in the constructor, and never changes afterwards.  This
-	 * state should never handle events, but should call ch_handled() and
+	 * state should never handle events, but should call cth_handled() and
 	 * do nothing else.
 	 */
 	State _topState;
@@ -213,13 +213,13 @@ private:
 	State _state;
 
 	/**
-	 * The state to which we will transition.  Set by ch_transition(State).
+	 * The state to which we will transition.  Set by cth_transition(State).
 	 */
 	State _transitionState;
 
 	/**
 	 * Parent state of the state most recently called.  Set by
-	 * ch_parent(State), which is called by any state that does not handle
+	 * cth_parent(State), which is called by any state that does not handle
 	 * an event.
 	 */
 	State _parentState;
@@ -257,18 +257,18 @@ private:
 		do {
 			s = (static_cast<C*>(this)->*state)(e);
 			switch (s) {
-			case CH_HANDLED:
+			case CTH_HANDLED:
 				break;
-			case CH_PARENT:
+			case CTH_PARENT:
 				state = _parentState;
 				break;
-			case CH_TRANSITION:
+			case CTH_TRANSITION:
 				transition(_state, _transitionState);
 				// Force a break from the while loop.
-				s = CH_HANDLED;
+				s = CTH_HANDLED;
 				break;
 			}
-		} while (s != CH_HANDLED);
+		} while (s != CTH_HANDLED);
 	};
 
 	/**
@@ -325,8 +325,8 @@ private:
 		if (src == dst) {
 			// We are transitioning from a state to itself, so call
 			// the exit and then the entry actions.
-			(static_cast<C*>(this)->*src)(E(Event::CHE_EXIT));
-			(static_cast<C*>(this)->*src)(E(Event::CHE_ENTRY));
+			(static_cast<C*>(this)->*src)(E(Event::CTHE_EXIT));
+			(static_cast<C*>(this)->*src)(E(Event::CTHE_ENTRY));
 			return;
 		}
 
@@ -352,13 +352,13 @@ private:
 			}
 			if (srcs.back() != _topState) {
 				(static_cast<C*>(this)->*srcs.back()) // func
-					(E(Event::CHE_PARENT));	       // arg
+					(E(Event::CTHE_PARENT));      // arg
 				srcs.push_back(_parentState);
 				assert( srcs.size() <= MAX_DEPTH );
 			}
 			if (dests.back() != _topState) {
 				(static_cast<C*>(this)->*dests.back()) // func
-					(E(Event::CHE_PARENT));		// arg
+					(E(Event::CTHE_PARENT));       // arg
 				dests.push_back(_parentState);
 				assert( dests.size() <= MAX_DEPTH );
 			}
@@ -382,12 +382,12 @@ private:
 		States_const_iterator srcit;
 		for (srcit = srcs.begin(); srcit != srcs.end(); srcit++) {
 			State s = *srcit;
-			(static_cast<C*>(this)->*s)(E(Event::CHE_EXIT));
+			(static_cast<C*>(this)->*s)(E(Event::CTHE_EXIT));
 		}
 		States_const_reverse_iterator destit;
 		for (destit = dests.rbegin(); destit != dests.rend(); destit++) {
 			State d = *destit;
-			(static_cast<C*>(this)->*d)(E(Event::CHE_ENTRY));
+			(static_cast<C*>(this)->*d)(E(Event::CTHE_ENTRY));
 		}
 
 		// Save the destination state as the current state.  This will
@@ -463,7 +463,7 @@ private:
 		State state = dst;
 
 		do {
-			(static_cast<C*>(this)->*state)(E(Event::CHE_PARENT));
+			(static_cast<C*>(this)->*state)(E(Event::CTHE_PARENT));
 			if (_parentState != _topState) {
 				dests.push_front(_parentState);
 				assert( dests.size() <= MAX_DEPTH );
@@ -474,7 +474,7 @@ private:
 
 		States_const_iterator i;
 		for (i=dests.begin(); i != dests.end(); i++) {
-			(static_cast<C*>(this)->*(*i))(E(Event::CHE_ENTRY));
+			(static_cast<C*>(this)->*(*i))(E(Event::CTHE_ENTRY));
 		}
 	};
 
@@ -482,8 +482,8 @@ private:
 	void exitTransition()
 	{
 		while (_state != _topState) {
-			(static_cast<C*>(this)->*_state)(E(Event::CHE_EXIT));
-			(static_cast<C*>(this)->*_state)(E(Event::CHE_PARENT));
+			(static_cast<C*>(this)->*_state)(E(Event::CTHE_EXIT));
+			(static_cast<C*>(this)->*_state)(E(Event::CTHE_PARENT));
 			_state = _parentState;
 		}
 	};
