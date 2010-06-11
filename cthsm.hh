@@ -137,31 +137,19 @@ protected:
 	};
 
 	/**
-	 * \arg top the top state for a derived HSM.  This state should return
-	 * cth_handled() and do nothing else.
-	 *
 	 * \arg initial the initial state for a derived HSM.  A transition from
 	 * the top state is done in the constructor.
+	 *
+	 * \arg top the top state for a derived HSM.  This state should return
+	 * cth_handled() and do nothing else.
 	 */
-	CTHsm<C,E>(State top, State initial)
+	CTHsm<C,E>(State initial, State top = &C::topState)
 		: _events(),
 		  _event_lock(false),
 		  _cthsmStartHasBeenCalled(false)
 	{
+		_state = initial;
 		_topState = top;
-		_state = initial;
-	};
-
-	/**
-	 * \arg initial the initial state for a derived HSM.
-	 */
-	CTHsm<C,E>(State initial)
-		: _events(),
-		  _event_lock(false),
-		  _cthsmStartHasBeenCalled(false)
-	{
-		_topState = &C::topState;
-		_state = initial;
 	};
 
 	/**

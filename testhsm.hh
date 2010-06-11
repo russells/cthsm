@@ -158,7 +158,7 @@ public:
 		}
 	};
 
-	TestHSM() : CTHsm<TestHSM,TestEvent>(&TestHSM::topState, &TestHSM::leftBranch2) {
+	TestHSM() : CTHsm<TestHSM,TestEvent>(&TestHSM::leftBranch2) {
 		cthsmStart();
 	};
 
