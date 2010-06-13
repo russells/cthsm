@@ -18,3 +18,9 @@ would have to instead check for a return value of CTH_HANDLED.
 
 The TestHSM example is too small, although it does show all the features of
 cthsm.  So make a better, bigger example.
+
+
+* Profiling.
+
+When the bigger example does exist, profile it.  Find out if any bits of
+CTHSM::CTHsm<C,E> are using up too much time.
