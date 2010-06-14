@@ -1,8 +1,8 @@
 HSM in a C++ template.
 
-The template header is fairly well commented, and testhsm.cc and testhsm.hh
-contain an example class that responds to some events and prints out the
-events it receives and the transitions it takes in response.
+The template header (cthsm.hh) is fairly well commented, and testhsm.cc and
+testhsm.hh contain an example class that responds to some events and prints
+out the events it receives and the transitions it takes in response.
 
 Inspiration is from the QP state machine framework, which is at
 http://state-machine.com/.  The C++ QP implementation uses pointers to

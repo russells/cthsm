@@ -18,6 +18,27 @@
 namespace CTHSM {
 
 
+/**
+ * A base class for CHSM events.
+ *
+ * HSM classes derived from CHsm will be sent events.  Those events can be
+ * derived from this Event class, with two advantages:
+ *
+ * - Event contains the definitions for CHE_PARENT, CHE_ENTRY and CHE_EXIT,
+ *   which are the events used by the framework to manage state transitions.
+ *   Although they are public in here and could be used by other classes, it is
+ *   convenient to derive from this class to get access to those members.
+ *
+ * - Event also keeps the event number as a data member, so you don't have to
+ *   add that member or access methods.
+ *
+ * The only fixed requirements for derived event classes (or even for
+ * non-derived event classes) is that they have:
+ *
+ * - a constructor that takes a single int parameter (the event type), and
+ *
+ * - a method `int event(void)` for access to the event type.
+ */
 class Event {
 public:
 	enum Signal {
@@ -154,7 +175,8 @@ protected:
 
 	/**
 	 * Do the transition to the initial state.  Derived state machines
-	 * should call this at the end of their constructors.
+	 * should call this at the end of their constructors.  It must be
+	 * called before handling any events, in any case.
 	 */
 	void cthsmStart() {
 		_cthsmStartHasBeenCalled = true;

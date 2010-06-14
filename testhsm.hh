@@ -19,8 +19,8 @@ using namespace CTHSM;
 /**
  * An example hsm event class.
  *
- * This class should derive from CTHSM::Event (but that is not absolutely
- * required.)  It must have
+ * This class derives from CTHSM::Event (but that is not absolutely required.)
+ * It must have
  *
  * - a constructor that takes a single int (the event number)
  *
