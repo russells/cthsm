@@ -24,3 +24,19 @@ cthsm.  So make a better, bigger example.
 
 When the bigger example does exist, profile it.  Find out if any bits of
 CTHSM::CTHsm<C,E> are using up too much time.
+
+
+* Test suite.
+
+This is getting big enough that a test suite is needed.  A t/ directory a
+la git is probably a good idea.
+
+Some ideas for tests:
+
+** Transition to a top state.
+
+** Transition from a state to itself.
+
+** Transition from the top state to somewhere else.
+
+** Transition from the top state to itself.
