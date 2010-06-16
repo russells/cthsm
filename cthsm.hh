@@ -93,6 +93,11 @@ protected:
 		 */
 		CTH_HANDLED = 1,
 		/**
+		 * An alias for CTH_HANDLED, intended as documentation for a
+		 * top state.
+		 */
+		CTH_I_AM_THE_TOP_STATE = CTH_HANDLED,
+		/**
 		 * Return to indicate that the State has not handled the event,
 		 * and that it has indicated the parent state that might handle
 		 * the event.  Returned automatically by cth_parent(State).
@@ -122,7 +127,11 @@ protected:
 		States_const_reverse_iterator;
 
 	/**
-	 * Called by a state function when it has handled an event.
+	 * Called by a state function when it has handled an event.  Can also
+	 * be called in response to the CTHE_PARENT event, to indicate that
+	 * this state is the top state.  It may be better for the top state to
+	 * do "return CTH_I_AM_THE_TOP_STATE" instead as that makes the top
+	 * state more obvious in your code.
 	 */
 	CTHsmState cth_handled() {
 		return CTH_HANDLED;
@@ -152,25 +161,30 @@ protected:
 
 	/**
 	 * A default top state that can be used by derived HSMs.
+	 *
+	 * This state does nothing but handle the event and return.  It can be
+	 * used as the top state for any derived HSM.
+	 *
+	 * Note that this state returns CTH_I_AM_THE_TOP_STATE, which is an
+	 * alias for CTH_HANDLED.  This allows the top state to be found easier
+	 * in your source code.
 	 */
 	CTHsmState topState(E e) {
-		return cth_handled();
+		// Only one state in your HSM should do this.
+		return CTH_I_AM_THE_TOP_STATE;
 	};
 
 	/**
 	 * \arg initial the initial state for a derived HSM.  A transition from
-	 * the top state is done in the constructor.
-	 *
-	 * \arg top the top state for a derived HSM.  This state should return
-	 * cth_handled() and do nothing else.
+	 * the top state is done in cthsmStart(), which must be called before
+	 * any events are handled.
 	 */
-	CTHsm<C,E>(State initial, State top = &C::topState)
+	CTHsm<C,E>(State initial)
 		: _events(),
 		  _event_lock(false),
 		  _cthsmStartHasBeenCalled(false)
 	{
 		_state = initial;
-		_topState = top;
 	};
 
 	/**
@@ -180,7 +194,7 @@ protected:
 	 */
 	void cthsmStart() {
 		_cthsmStartHasBeenCalled = true;
-		transition(_state);
+		transitionFromTop(_state);
 	};
 
 	/**
@@ -209,13 +223,6 @@ public:
 	};
 
 private:
-	/**
-	 * Set once in the constructor, and never changes afterwards.  This
-	 * state should never handle events, but should call cth_handled() and
-	 * do nothing else.
-	 */
-	State _topState;
-
 	/**
 	 * The current HSM state.  Also set in the constructor so we can do the
 	 * initial transition in cthsmStart().
@@ -246,6 +253,34 @@ private:
 	bool _event_lock;
 
 	/**
+	 * Convenience function to send one event by event number.
+	 *
+	 * \arg n event number
+	 *
+	 * \arg s the state that is to handle this event.  If 0, the event is
+	 * sent to the current state of this HSM.
+	 */
+	inline CTHsmState s1(int n, State s=0) {
+		if (!s)
+			s = _state;
+		return (static_cast<C*>(this)->*s)(E(n));
+	};
+
+	/**
+	 * Convenience function to send one event.
+	 *
+	 * \arg e event
+	 *
+	 * \arg s the state that is to handle this event.  If 0, the event is
+	 * sent to the current state of this HSM.
+	 */
+	inline CTHsmState s1(E e, State s=0) {
+		if (!s)
+			s = _state;
+		return (static_cast<C*>(this)->*s)(e);
+	};
+
+	/**
 	 * While there are events in our queue, handle them.
 	 */
 	void sendEvents() {
@@ -265,7 +300,7 @@ private:
 		State state = _state;
 		CTHsmState s;
 		do {
-			s = (static_cast<C*>(this)->*state)(e);
+			s = s1(e, state);
 			switch (s) {
 			case CTH_HANDLED:
 				break;
@@ -321,70 +356,109 @@ private:
 	{
 		assert( _cthsmStartHasBeenCalled );
 
-		// It would be silly to transition to the top state, whose only
-		// function is to discard events.  The only exception to this
-		// is in the destructor, when we want to exit completely, but
-		// that happens elsewhere.
-		assert( dst != _topState );
-
-		// Degenerate case.
-		if (src == _topState) {
-			transition(dst);
-			return;
-		}
 		if (src == dst) {
 			// We are transitioning from a state to itself, so call
 			// the exit and then the entry actions.
-			(static_cast<C*>(this)->*src)(E(Event::CTHE_EXIT));
-			(static_cast<C*>(this)->*src)(E(Event::CTHE_ENTRY));
+			s1(Event::CTHE_EXIT, src);
+			s1(Event::CTHE_ENTRY, dst);
 			return;
 		}
 
+		// Find out the parent states for src and dst just once.
+		State src_parent = 0;
+		if ( CTH_HANDLED == s1(Event::CTHE_PARENT, src) ) {
+			// Degenerate case: transition from the top state.
+			transitionFromTop(dst);
+			return;
+		} else {
+			src_parent = _parentState;
+		}
+		State dst_parent = 0;
+		if ( CTH_HANDLED == s1(Event::CTHE_PARENT, dst) ) {
+			transitionToTop(src);
+			return;
+		} else {
+			dst_parent = _parentState;
+		}
+
 		States srcs;
-		States dests;
-
-		// Walk the tree to find the transition path.  Each parent path
-		// will be pushed onto its queue until we have a complete path.
-		//
-		// The path is complete when the any member of srcs is equal to
-		// the tail of dests, or any member of dests is equal to the
-		// tail of srcs.
-		//
-
+		States dsts;
 		srcs.push_back(src);
-		dests.push_back(dst);
-		while (srcs.back() != dests.back()) {
-			if (strip_states(srcs, dests.back())) {
+		dsts.push_back(dst);
+		// We got the parent states of src and dst earlier, so push
+		// them onto the lists.  If either of these is not valid (ie if
+		// either src or dst was the top state), then we've already
+		// done a transition from or to the top state, and control will
+		// never get here.  Assert that.
+		assert( src_parent );
+		srcs.push_back(src_parent);
+		assert( dst_parent );
+		dsts.push_back(dst_parent);
+
+		// These are set when the src or dst tree walk gets to the top
+		// state, so we know when to stop asking for the parent.
+		bool srcs_top = false;
+		bool dsts_top = false;
+
+		// Walk the tree to find the transition path.  Each parent
+		// state will be pushed onto its queue until we have a complete
+		// path.
+		//
+		// The path is complete when any member of srcs is equal to the
+		// tail of dsts, or any member of dsts is equal to the tail of
+		// srcs.  The first check we do is the simple case where the
+		// list tails are the same.  strip_states() does the more
+		// complex check for the tail of one list being inside the
+		// other list.  strip_states() also trims the unnecessary
+		// states from one of the lists.
+
+		while (srcs.back() != dsts.back()) {
+			if (strip_states(srcs, dsts.back())) {
 				break;
 			}
-			if (strip_states(dests, srcs.back())) {
+			if (strip_states(dsts, srcs.back())) {
 				break;
 			}
-			if (srcs.back() != _topState) {
-				(static_cast<C*>(this)->*srcs.back()) // func
-					(E(Event::CTHE_PARENT));      // arg
-				srcs.push_back(_parentState);
-				assert( srcs.size() <= MAX_DEPTH );
+			if (!srcs_top) {
+				CTHsmState s;
+				s = s1(Event::CTHE_PARENT, srcs.back());
+				if (s == CTH_HANDLED) {
+					srcs_top = true;
+				} else {
+					srcs.push_back(_parentState);
+					assert( srcs.size() <= MAX_DEPTH );
+				}
 			}
-			if (dests.back() != _topState) {
-				(static_cast<C*>(this)->*dests.back()) // func
-					(E(Event::CTHE_PARENT));       // arg
-				dests.push_back(_parentState);
-				assert( dests.size() <= MAX_DEPTH );
+			if (!dsts_top) {
+				CTHsmState s;
+				s = s1(Event::CTHE_PARENT, dsts.back());
+				if (s == CTH_HANDLED) {
+					dsts_top = true;
+				} else {
+					dsts.push_back(_parentState);
+					assert( dsts.size() <= MAX_DEPTH );
+				}
 			}
+			// Since each state can report whether or not it is the
+			// top state, it's possible that two different states
+			// can do that at the same time.  That would be an
+			// error.  If it does happen, then this loop will never
+			// terminate.  Check for that here.
+			assert( ! (srcs_top && dsts_top
+				   && srcs.back() != dsts.back()) );
 		}
 		// We now have two lists of States, and there should be at
 		// least one entry in each list.
 		assert( srcs.size() > 0 );
-		assert( dests.size() > 0 );
+		assert( dsts.size() > 0 );
 
 		// The back() of the lists should be the same State.
-		assert( srcs.back() == dests.back() );
+		assert( srcs.back() == dsts.back() );
 
 		// We don't want to call any actions on the common parent
 		// state, so remove it from both lists.
 		srcs.pop_back();
-		dests.pop_back();
+		dsts.pop_back();
 
 		// Now call the exit action for the src states in forward list
 		// order, and the entry actions for the dst states in reverse
@@ -392,12 +466,12 @@ private:
 		States_const_iterator srcit;
 		for (srcit = srcs.begin(); srcit != srcs.end(); srcit++) {
 			State s = *srcit;
-			(static_cast<C*>(this)->*s)(E(Event::CTHE_EXIT));
+			s1(Event::CTHE_EXIT, s);
 		}
-		States_const_reverse_iterator destit;
-		for (destit = dests.rbegin(); destit != dests.rend(); destit++) {
-			State d = *destit;
-			(static_cast<C*>(this)->*d)(E(Event::CTHE_ENTRY));
+		States_const_reverse_iterator dstit;
+		for (dstit = dsts.rbegin(); dstit != dsts.rend(); dstit++) {
+			State d = *dstit;
+			s1(Event::CTHE_ENTRY, d);
 		}
 
 		// Save the destination state as the current state.  This will
@@ -461,41 +535,48 @@ private:
 	}
 
 	/** The simple transition from the top state to a destination. */
-	void transition(State dst)
+	void transitionFromTop(State dst)
 	{
 		assert( _cthsmStartHasBeenCalled );
-
-		// Don't transition to the top state.
-		assert( dst != _topState );
 
 		States dests;
 		dests.push_front(dst);
 		State state = dst;
 
-		do {
-			(static_cast<C*>(this)->*state)(E(Event::CTHE_PARENT));
-			if (_parentState != _topState) {
-				dests.push_front(_parentState);
-				assert( dests.size() <= MAX_DEPTH );
-			}
+		while (CTH_HANDLED != s1(Event::CTHE_PARENT, state)) {
+			dests.push_front(_parentState);
+			assert( dests.size() <= MAX_DEPTH );
 			state = _parentState;
-		} while (_parentState != _topState);
+		}
 
 
 		States_const_iterator i;
 		for (i=dests.begin(); i != dests.end(); i++) {
-			(static_cast<C*>(this)->*(*i))(E(Event::CTHE_ENTRY));
+			s1(Event::CTHE_ENTRY, (*i));
 		}
 	};
+
+	/**
+	 * Transition from the current state to the top state.
+	 */
+	void transitionToTop(State src) {
+		CTHsmState s;
+		State state = src;
+		for (;;) {
+			s1(Event::CTHE_EXIT, state);
+			s = s1(Event::CTHE_PARENT, state);
+			if (s == CTH_HANDLED)
+				break;
+			else
+				state = _parentState; // go up one state
+		}
+		_state = state;
+	}
 
 	/** Exit back to the top state.  Called only by the destructor. */
 	void exitTransition()
 	{
-		while (_state != _topState) {
-			(static_cast<C*>(this)->*_state)(E(Event::CTHE_EXIT));
-			(static_cast<C*>(this)->*_state)(E(Event::CTHE_PARENT));
-			_state = _parentState;
-		}
+		transitionToTop(_state);
 	};
 
 };

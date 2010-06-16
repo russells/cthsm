@@ -1,19 +1,5 @@
 -*- outline -*-
 
-* Change the parent state mechanism.
-
-Currently, when searching up the hierarchy with the CTHE_PARENT event, we
-check for the top state by comparing the pointer-to-member returned by each
-state to the _topState member.  The result of this is that the top state is
-never called, even though it must be a real member function.  The only use
-for it is as its pointer to member.
-
-This seems wrong.  So change the parent mechanism so that the top state
-indicates itself, by returning cth_handled() in response to CTHE_PARENT.
-Then the CTHsm methods that check for _topState in response to CTHE_PARENT
-would have to instead check for a return value of CTH_HANDLED.
-
-
 * A bigger example.
 
 The TestHSM example is too small, although it does show all the features of

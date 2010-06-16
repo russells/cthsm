@@ -69,30 +69,15 @@ class TestHSM : public CTHsm<TestHSM, TestEvent> {
 public:
 	/**
 	 * Our constructor needs to call the parent CTHsm<TestHSM,TestEvent>
-	 * constructor with one or two arguments:
-	 *
-	 * - The initial state for this HSM, which must be a state from this
-	 *   HSM, as the base class can't know what transitions you want to do.
-	 *
-	 * - And possibly also the top state for this HSM, which can be a state
-	 *   from this HSM, as in this case, or the topState() provided by the
-	 *   base template class.
-	 *
-	 * The second argument defaults to &TestHSM::topState, so we don't have
-	 * to specify that.
-	 *
-	 * If you use the provided topState() method, you must get its pointer
-	 * to member address as &TestHSM::topState, and not
-	 * &CTHsm<TestHSM,TestEvent>::topState due to C++ rules for access to
-	 * protected members.
+	 * constructor with one argument: the initial state for this HSM, which
+	 * must be a state from this HSM, as the base class can't know what
+	 * transitions you want to do.
 	 *
 	 * Also, we must call cthsmStart() before handling any events.  It's
 	 * safest to do that here.
 	 *
 	 * (Note: in this implementation we have shadowed the template class
-	 * topState() with one of our own.  That will change in a this example,
-	 * soon, as will the method of indicating the top of the hierarchy
-	 * expected by the event machinery in CTHsm<C,E>.)
+	 * topState() with one of our own.)
 	 */
 	TestHSM() : CTHsm<TestHSM,TestEvent>(&TestHSM::leftBranch2) {
 		cthsmStart();
@@ -102,7 +87,7 @@ public:
 		switch (e.event()) {
 		case TestEvent::CTHE_PARENT:
 			std::cout << "topState parent\n";
-			return cth_handled();
+			return CTH_I_AM_THE_TOP_STATE;
 		case TestEvent::CTHE_ENTRY:
 			std::cout << "topState entry\n";
 			return cth_handled();
