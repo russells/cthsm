@@ -1,0 +1,3 @@
+A test suite for cthsm.
+
+Run "make test" in the parent directory.

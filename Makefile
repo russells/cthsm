@@ -1,36 +1,21 @@
 
-CXXFLAGS = -g -Wall -Werror
+.PHONY: default
+default:
+	@echo Nothing to make.  Try "make test".
 
-SRCS = testhsm.cc
-
-OBJS = $(SRCS:.cc=.o)
-DEPS = $(SRCS:.cc=.d)
-DEPDEPS = Makefile
-
-.SUFFIXES: .cc .d
-%.d: %.cc $(DEPDEPS)
-	@echo DEPENDS: $<
-	@$(CXX) -MM -MD -E $(CXXFLAGS) $<
-
-default: testhsm
-
-testhsm: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
-
-
-ifneq ($(MAKECMDGOALS),clean)
--include $(DEPS)
-endif
-
-.PHONY: clean realclean
-clean:
-	rm -f *.o *.d
-	rm -f testhsm
-
-realclean: clean docclean
+.PHONY: clean
+clean: docclean testclean
 
 CTHSM.dox: CTHSM.dox.header README CTHSM.dox.footer
 	cat $^ > $@
+
+.PHONY: test
+test: default
+	cd t && make
+
+.PHONY: testclean
+testclean:
+	cd t && make clean
 
 .PHONY: doco docclean
 doco: CTHSM.dox

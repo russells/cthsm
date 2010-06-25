@@ -1,0 +1,55 @@
+----- Making a new TestHSM
+leftBranch2 parent
+leftBranch1 parent
+commonState parent
+topState parent
+topState entry
+commonState entry
+leftBranch1 entry
+leftBranch2 entry
+----- Sending TE_THREE
+leftBranch2 parent
+rightBranch3 parent
+leftBranch1 parent
+rightBranch2 parent
+commonState parent
+rightBranch1 parent
+leftBranch2 exit
+leftBranch1 exit
+rightBranch1 entry
+rightBranch2 entry
+rightBranch3 entry
+----- Sending TE_BACK
+rightBranch3 parent
+leftBranch1 parent
+rightBranch2 parent
+commonState parent
+rightBranch1 parent
+topState parent
+rightBranch3 exit
+rightBranch2 exit
+rightBranch1 exit
+leftBranch1 entry
+----- Sending TE_BACKAGAIN
+commonState TE_BACKAGAIN
+leftBranch1 parent
+rightBranch3 parent
+commonState parent
+rightBranch2 parent
+topState parent
+rightBranch1 parent
+leftBranch1 exit
+rightBranch1 entry
+rightBranch2 entry
+rightBranch3 entry
+----- Deleting the TestHSM
+rightBranch3 exit
+rightBranch3 parent
+rightBranch2 exit
+rightBranch2 parent
+rightBranch1 exit
+rightBranch1 parent
+commonState exit
+commonState parent
+topState exit
+topState parent
