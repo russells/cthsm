@@ -23,3 +23,17 @@ Some ideas for more tests:
 ** Transition from the top state to somewhere else.
 
 ** Transition from the top state to itself.
+
+
+* Transition actions
+
+HSMs are meant to be able to associate actions with transitions, so that
+when a particular transition occurs, a particular action happens.  The
+sequence is meant to be
+
+  exit action(s) - transaction action - entry action(s)
+
+where the exit action(s) are for the state(s) being exited, and the entry
+action(s) are for the state(s) being entered.
+
+cthsm does not do this.  Fix.
