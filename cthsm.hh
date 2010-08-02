@@ -116,6 +116,12 @@ protected:
 	typedef CTHsmState (C::*State)(E);
 
 	/**
+	 * A TransitionAction takes place when transitioning between states -
+	 * after the exit actions and before the entry actions.
+	 */
+	typedef void (C::*TransitionAction)(void);
+
+	/**
 	 * A list of States.  This is a deque so we can iterate over it both
 	 * forward and backwards.
 	 */
@@ -154,8 +160,9 @@ protected:
 	 * current state, in the case that an event is not handled and we start
 	 * traversing up to find a state function that does handle it.
 	 */
-	CTHsmState cth_transition(State state) {
+	CTHsmState cth_transition(State state, TransitionAction tact = 0) {
 		_transitionState = state;
+		_transitionAction = tact;
 		return CTH_TRANSITION;
 	};
 
@@ -235,6 +242,12 @@ private:
 	State _transitionState;
 
 	/**
+	 * The action to do during the transition.  Set by
+	 * cth_transition(State, TransitionAction).
+	 */
+	TransitionAction _transitionAction;
+
+	/**
 	 * Parent state of the state most recently called.  Set by
 	 * cth_parent(State), which is called by any state that does not handle
 	 * an event.
@@ -308,7 +321,8 @@ private:
 				state = _parentState;
 				break;
 			case CTH_TRANSITION:
-				transition(_state, _transitionState);
+				transition(_state, _transitionState,
+					   _transitionAction);
 				// Force a break from the while loop.
 				s = CTH_HANDLED;
 				break;
@@ -343,6 +357,9 @@ private:
 	 * self transition, so we call the exit then the entry action for that
 	 * state.
 	 *
+	 * If the TransactionAction is supplied, call that after the exit
+	 * actions and before the entry actions.
+	 *
 	 * TODO: When a significant application using CTHsm exists, profile to
 	 * see how much time is spent in here, and work out how to minimise it.
 	 * One possible optimisation would be to keep a map of pair<src,dst> to
@@ -351,8 +368,9 @@ private:
 	 *
 	 * \arg src the source state (where we start)
 	 * \arg dst the destination state (where we end up)
+	 * \arg tact the action to perform in the middle of the transition
 	 */
-	void transition(State src, State dst)
+	void transition(State src, State dst, TransitionAction tact)
 	{
 		assert( _cthsmStartHasBeenCalled );
 
@@ -461,13 +479,20 @@ private:
 		dsts.pop_back();
 
 		// Now call the exit action for the src states in forward list
-		// order, and the entry actions for the dst states in reverse
-		// list order.
+		// order
 		States_const_iterator srcit;
 		for (srcit = srcs.begin(); srcit != srcs.end(); srcit++) {
 			State s = *srcit;
 			s1(Event::CTHE_EXIT, s);
 		}
+
+		// ... and the transition action, if specified.
+		if (tact) {
+			(static_cast<C*>(this)->*tact)();
+		}
+
+		// ... and the entry actions for the dst states in reverse list
+		// order.
 		States_const_reverse_iterator dstit;
 		for (dstit = dsts.rbegin(); dstit != dsts.rend(); dstit++) {
 			State d = *dstit;

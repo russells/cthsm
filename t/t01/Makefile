@@ -1,7 +1,7 @@
 
 CXXFLAGS = -g -Wall -Werror -I $(CTHSMINC)
 
-SRCS = testhsm.cc
+SRCS = t1.cc
 
 OBJS = $(SRCS:.cc=.o)
 DEPS = $(SRCS:.cc=.d)
@@ -12,9 +12,15 @@ DEPDEPS = Makefile
 	@echo DEPENDS: $<
 	@$(CXX) -MM -MD -E $(CXXFLAGS) $<
 
-default: testhsm
+default:
+	@echo No default target: t1 t2 clean
+	@false
 
-testhsm: $(OBJS)
+t1: t1.cc t1.hh
+
+t2: t2.cc
+
+t1: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 
@@ -25,7 +31,7 @@ endif
 .PHONY: clean realclean
 clean:
 	rm -f *.o *.d
-	rm -f testhsm
+	rm -f t1 t2
 	rm -f $(OUTPUTFILES)
 
 realclean: clean docclean

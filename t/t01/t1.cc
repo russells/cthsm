@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "testhsm.hh"
+#include "t1.hh"
 
 int main(int argc, char **argv)
 {

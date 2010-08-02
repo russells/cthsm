@@ -109,6 +109,7 @@ run_test () {
 			return 0
 		else
 			colour boldred 'FAIL\n'
+			cat "$RunErr"
 			return 1
 		fi
 	fi
@@ -123,6 +124,7 @@ run_test () {
 			return 0
 		else
 			colour boldred 'FAIL\n'
+			cat "$TestErr"
 			return 1
 		fi
 	fi
