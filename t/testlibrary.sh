@@ -10,6 +10,12 @@ TestOut=test-output
 TestErr=test-error
 TestLibraryLocal=./testlibrary-local.sh
 
+if [ -n "$TERM" ] ; then
+	TPUT=tput
+else
+	TPUT=:
+fi
+
 if [ -f "$TestLibraryLocal" ] ; then
 	. "$TestLibraryLocal"
 fi
@@ -19,13 +25,13 @@ colour () {
 	local Colour="$1"
 	shift
 	case "$Colour" in
-		boldblue) tput bold ; tput setaf 4 ;;
-		boldred)  tput bold ; tput setaf 1 ;;
-		yellow)               tput setaf 3 ;;
-		green)                tput setaf 2 ;;
+		boldblue) $TPUT bold ; $TPUT setaf 4 ;;
+		boldred)  $TPUT bold ; $TPUT setaf 1 ;;
+		yellow)                $TPUT setaf 3 ;;
+		green)                 $TPUT setaf 2 ;;
 	esac
 	printf "$@"
-	tput sgr0
+	$TPUT sgr0
 }
 
 test_header () {
